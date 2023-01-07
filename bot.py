@@ -68,5 +68,7 @@ while True:
       else:
         send_resp('err')
     sleep(5)
+  except KeyboardInterrupt:
+    exit(0)
   except:
     pass
