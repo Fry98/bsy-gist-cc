@@ -112,9 +112,10 @@ def cmd_exec(cmd):
     print('ERROR: Invalid arguments')
     return
 
-  res = submit_to_bot(cmd[1], f'scp {cmd[2]}')
-  if res is None:
-    return
+  args = ' '.join(filter(lambda x: len(x) > 0, cmd[2:]))
+  res = submit_to_bot(cmd[1], f'exec {args}')
+  if res is not None:
+    print(res, end='')
 
 def main():
   while True:

