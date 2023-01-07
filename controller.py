@@ -7,7 +7,12 @@ from math import floor
 from os import getenv
 
 load_dotenv()
-g = Github(getenv('GITHUB_TOKEN'))
+TOKEN = getenv('GITHUB_TOKEN')
+if TOKEN is None:
+  print('ERROR: Missing GitHub token')
+  exit(1)
+
+g = Github(TOKEN)
 me = g.get_user()
 bots = {}
 
@@ -32,8 +37,8 @@ def update_botlist():
 
 def print_help():
   print('Available commands:')
-  print('  list <- print the list of IDs of currently active bots')
-  print('  help <- print this list of commands')
+  print('  list <- prints the list of IDs of currently active bots')
+  print('  help <- prints this list of commands')
   print('  ls <bot-id> <path>')
   print('  w <bot-id>')
   print('  id <bot-id>')
