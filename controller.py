@@ -136,6 +136,8 @@ def main():
 
       if count == 0:
         print('-- No bots currently active --')
+    elif cmd[0] == 'help':
+      print_help()
     elif cmd[0] == 'ls':
       cmd_ls(cmd)
     elif cmd[0] == 'w':
